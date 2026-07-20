@@ -294,8 +294,8 @@ export default function InspectionDetailView() {
                           <td className="py-3 capitalize font-semibold">{det.class_name}</td>
                           <td className="py-3 font-mono text-[#86868b]">{(confidence * 100).toFixed(1)}%</td>
                           <td className="py-3 font-mono">
-                            <span className={prob >= 0.5 ? "text-[#ff3b30] font-bold" : "text-[#34c759]"}>
-                              {(prob * 100).toFixed(1)}%
+                            <span className={det.is_defective ? "text-[#ff3b30] font-bold" : "text-[#34c759]"}>
+                              {((1.0 - prob) * 100).toFixed(1)}%
                             </span>
                           </td>
                           <td className="py-3">
