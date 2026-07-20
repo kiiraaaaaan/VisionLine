@@ -15,6 +15,8 @@ import {
   Package,
   Heart,
   Zap,
+  BarChart2,
+  Target,
 } from "lucide-react";
 import { API_BASE, BACKEND_URL } from "./config";
 
@@ -28,6 +30,24 @@ interface DashboardStats {
   pending_reviews_count: number;
   defect_class_counts: Record<string, number>;
   daily_trends: Array<{ date: string; total: number; defective: number }>;
+}
+
+interface ModelMetrics {
+  model_name: string;
+  model_file: string;
+  task: string;
+  test_set_size: number;
+  threshold: number;
+  true_positive: number;
+  false_positive: number;
+  true_negative: number;
+  false_negative: number;
+  accuracy: number;
+  precision: number;
+  recall: number;
+  f1_score: number;
+  specificity: number;
+  roc_auc: number;
 }
 
 interface InspectionItem {
@@ -44,19 +64,22 @@ interface InspectionItem {
 
 export default function Dashboard() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [modelMetrics, setModelMetrics] = useState<ModelMetrics | null>(null);
   const [recentFeed, setRecentFeed] = useState<InspectionItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetchDashboardData = async () => {
     try {
-      const [statsRes, listRes] = await Promise.all([
+      const [statsRes, listRes, metricsRes] = await Promise.all([
         fetch(`${API_BASE}/analytics/dashboard`),
         fetch(`${API_BASE}/inspections?page=1&limit=5`),
+        fetch(`${API_BASE}/metrics/model-performance`),
       ]);
 
       if (statsRes.ok) setStats(await statsRes.json());
       if (listRes.ok) { const d = await listRes.json(); setRecentFeed(d.items); }
+      if (metricsRes.ok) setModelMetrics(await metricsRes.json());
     } catch (error) {
       console.error("Error fetching dashboard statistics:", error);
     } finally {
@@ -316,6 +339,110 @@ export default function Dashboard() {
         </div>
 
       </div>
+
+      {/* ── Model Performance & Confusion Matrix ─────────────────────────── */}
+      {modelMetrics && (
+        <div className="bg-white rounded-2xl border border-[#e5e5ea] shadow-apple-card overflow-hidden">
+          <div className="p-5 border-b border-[#e5e5ea] bg-[#f5f5f7]/50 flex items-center justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-[#1d1d1f] flex items-center gap-2">
+                <BarChart2 className="w-5 h-5 text-[#5856d6]" />
+                AI Model Performance — Proof of Work
+              </h2>
+              <p className="text-xs text-[#86868b] mt-0.5">
+                {modelMetrics.model_name} · {modelMetrics.task} · Test set: {modelMetrics.test_set_size.toLocaleString()} samples
+              </p>
+            </div>
+            <span className="px-3 py-1 rounded-full bg-[#5856d6]/10 text-[#5856d6] text-[10px] font-bold uppercase tracking-wider">
+              Evaluated
+            </span>
+          </div>
+
+          <div className="p-6 grid grid-cols-1 lg:grid-cols-2 gap-8">
+
+            {/* Left: Confusion Matrix */}
+            <div>
+              <h3 className="text-sm font-bold text-[#1d1d1f] mb-1">Confusion Matrix</h3>
+              <p className="text-xs text-[#86868b] mb-4">Threshold: {modelMetrics.threshold} · Binary classification on {modelMetrics.test_set_size.toLocaleString()} test images</p>
+              <div className="w-full">
+                {/* Axis labels */}
+                <div className="flex">
+                  <div className="w-28" />
+                  <div className="flex-1 text-center text-[10px] font-bold text-[#86868b] uppercase tracking-wider pb-2">Predicted: NORMAL</div>
+                  <div className="flex-1 text-center text-[10px] font-bold text-[#86868b] uppercase tracking-wider pb-2">Predicted: DEFECTIVE</div>
+                </div>
+
+                {/* Row 1: Actual NORMAL */}
+                <div className="flex items-stretch gap-1 mb-1">
+                  <div className="w-28 flex items-center justify-end pr-3 text-[10px] font-bold text-[#86868b] uppercase tracking-wider">Actual: NORMAL</div>
+                  {/* TN */}
+                  <div className="flex-1 rounded-xl bg-[#34c759]/10 border-2 border-[#34c759]/40 p-4 text-center">
+                    <div className="text-[10px] font-bold text-[#34c759] uppercase tracking-wider mb-1">True Negative ✓</div>
+                    <div className="text-3xl font-black text-[#1d1d1f] font-mono">{modelMetrics.true_negative.toLocaleString()}</div>
+                    <div className="text-[10px] text-[#86868b] mt-1">Correct — Normal</div>
+                  </div>
+                  {/* FP */}
+                  <div className="flex-1 rounded-xl bg-[#ff9500]/10 border-2 border-[#ff9500]/30 p-4 text-center">
+                    <div className="text-[10px] font-bold text-[#ff9500] uppercase tracking-wider mb-1">False Positive ✗</div>
+                    <div className="text-3xl font-black text-[#1d1d1f] font-mono">{modelMetrics.false_positive}</div>
+                    <div className="text-[10px] text-[#86868b] mt-1">Flagged — Was Normal</div>
+                  </div>
+                </div>
+
+                {/* Row 2: Actual DEFECTIVE */}
+                <div className="flex items-stretch gap-1">
+                  <div className="w-28 flex items-center justify-end pr-3 text-[10px] font-bold text-[#86868b] uppercase tracking-wider">Actual: DEFECTIVE</div>
+                  {/* FN */}
+                  <div className="flex-1 rounded-xl bg-[#ff3b30]/10 border-2 border-[#ff3b30]/30 p-4 text-center">
+                    <div className="text-[10px] font-bold text-[#ff3b30] uppercase tracking-wider mb-1">False Negative ✗</div>
+                    <div className="text-3xl font-black text-[#1d1d1f] font-mono">{modelMetrics.false_negative}</div>
+                    <div className="text-[10px] text-[#86868b] mt-1">Missed — Was Defective</div>
+                  </div>
+                  {/* TP */}
+                  <div className="flex-1 rounded-xl bg-[#34c759]/10 border-2 border-[#34c759]/40 p-4 text-center">
+                    <div className="text-[10px] font-bold text-[#34c759] uppercase tracking-wider mb-1">True Positive ✓</div>
+                    <div className="text-3xl font-black text-[#1d1d1f] font-mono">{modelMetrics.true_positive}</div>
+                    <div className="text-[10px] text-[#86868b] mt-1">Correct — Defective</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Metric Cards */}
+            <div>
+              <h3 className="text-sm font-bold text-[#1d1d1f] mb-1">Evaluation Metrics</h3>
+              <p className="text-xs text-[#86868b] mb-4">Industry-standard quality assurance benchmarks</p>
+              <div className="grid grid-cols-2 gap-3">
+                {[
+                  { label: "Accuracy", value: modelMetrics.accuracy, unit: "%", color: "#34c759", desc: "Overall correct predictions" },
+                  { label: "Precision", value: modelMetrics.precision, unit: "%", color: "#5856d6", desc: "Defect alerts that were real" },
+                  { label: "Recall", value: modelMetrics.recall, unit: "%", color: "#ff9500", desc: "Real defects caught" },
+                  { label: "F1 Score", value: modelMetrics.f1_score, unit: "%", color: "#0071e3", desc: "Precision-Recall balance" },
+                  { label: "Specificity", value: modelMetrics.specificity, unit: "%", color: "#32ade6", desc: "Normal items cleared" },
+                  { label: "ROC-AUC", value: modelMetrics.roc_auc, unit: "%", color: "#5856d6", desc: "Discrimination ability" },
+                ].map(m => (
+                  <div key={m.label} className="p-4 rounded-xl border border-[#e5e5ea] bg-[#f5f5f7]/50 hover:shadow-sm transition">
+                    <div className="text-[10px] font-bold text-[#86868b] uppercase tracking-wider">{m.label}</div>
+                    <div className="text-2xl font-black mt-1 font-mono" style={{ color: m.color }}>
+                      {m.value}<span className="text-sm font-bold text-[#86868b]">{m.unit}</span>
+                    </div>
+                    <div className="text-[10px] text-[#86868b] mt-1">{m.desc}</div>
+                    <div className="w-full bg-[#e5e5ea] rounded-full h-1 mt-2">
+                      <div className="h-1 rounded-full transition-all duration-700" style={{ width: `${m.value}%`, backgroundColor: m.color }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Model info footer */}
+              <div className="mt-4 p-3 rounded-xl bg-[#1d1d1f]/5 border border-[#e5e5ea] text-[10px] text-[#86868b] flex items-center justify-between">
+                <span>Model: <strong className="text-[#1d1d1f]">{modelMetrics.model_name}</strong> · <strong className="text-[#1d1d1f]">{modelMetrics.model_file}</strong></span>
+                <span className="font-bold text-[#34c759]">Production Active</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Live Activity Feed */}
       <div className="bg-white p-6 rounded-2xl border border-[#e5e5ea] shadow-apple-card">
