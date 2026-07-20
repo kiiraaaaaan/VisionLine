@@ -132,7 +132,7 @@ export default function InspectionDetailView() {
 
   const isDefective = inspection.status === "DEFECTIVE";
   const maxDef = inspection.max_defect_probability !== null ? inspection.max_defect_probability : 0;
-  const confidence = isDefective ? maxDef : 1.0 - maxDef;
+  const confidence = isDefective ? 1.0 - maxDef : maxDef;
   const isLowConfidence = confidence < 0.70;
 
   return (
@@ -287,7 +287,7 @@ export default function InspectionDetailView() {
                   <tbody className="divide-y divide-[#e5e5ea]">
                     {inspection.detections.map((det, index) => {
                       const prob = det.mobilenet_probability;
-                      const confidence = det.is_defective ? prob : 1.0 - prob;
+                      const confidence = det.is_defective ? 1.0 - prob : prob;
                       return (
                         <tr key={det.id} className="text-[#1d1d1f]">
                           <td className="py-3 font-bold text-[#86868b]">#{index + 1}</td>
