@@ -1,14 +1,31 @@
-# Install a CUDA-matched PyTorch build when GPU inference is required:
-# https://pytorch.org/get-started/locally/
+# ============================================================
+# VisionLine — Root Requirements
+# ============================================================
+# This file pins the shared ML/CV dependencies used by the
+# backend service. Frontend (Next.js) dependencies are managed
+# separately via frontend/package.json and npm.
+#
+# For GPU inference, install a CUDA-matched PyTorch build first:
+#   https://pytorch.org/get-started/locally/
+# ============================================================
+
+# --- ML & Computer Vision ---
 torch>=2.3,<3
 torchvision>=0.18,<1
-ultralytics>=8.3,<9
-gradio>=5.0,<7
+ultralytics>=8.3,<9          # YOLOv8n COCO person detector
 opencv-python-headless>=4.9,<5
 Pillow>=10,<13
 numpy>=1.26,<3
 pandas>=2.1,<3
-scikit-learn>=1.4,<2
-matplotlib>=3.8,<4
-tqdm>=4.66,<5
-PyYAML>=6,<7
+
+# --- Web Server & API ---
+fastapi>=0.110.0,<0.112.0
+uvicorn[standard]>=0.28.0,<0.30.0
+pydantic>=2.6.0,<3.0.0
+pydantic-settings>=2.2.0,<3.0.0
+python-multipart>=0.0.9      # Multipart file upload support
+
+# --- Database ---
+sqlalchemy>=2.0.0,<2.1.0     # Async ORM
+asyncpg>=0.29.0,<0.30.0      # Async PostgreSQL driver
+psycopg2-binary>=2.9.0,<3.0.0
