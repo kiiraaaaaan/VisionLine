@@ -543,80 +543,8 @@ export default function UploadSandbox() {
                     <p className="text-xs text-[#1d1d1f] leading-relaxed font-semibold">{getRecommendation(singleResult)}</p>
                   </div>
 
-                  {/* ── Per-Image Confusion Matrix ──────────────── */}
-                  <div className="pt-2">
-                    <div className="flex items-center gap-2 text-xs font-bold text-[#1d1d1f] mb-3">
-                      <Activity className="w-4 h-4 text-[#5856d6]" />
-                      <span>Model Evaluation — Confusion Matrix</span>
-                    </div>
-                    <p className="text-[10px] text-[#86868b] mb-3">
-                      MobileNetV2 · Test set: 6,815 samples · Threshold: 0.5
-                    </p>
-
-                    {/* 2×2 matrix grid */}
-                    {(() => {
-                      const isDef = singleResult.status === "DEFECTIVE";
-                      const isNormal = singleResult.status === "NORMAL";
-                      const activeCellStyle = "ring-2 ring-offset-1 ring-[#5856d6] scale-[1.02]";
-
-                      return (
-                        <div className="text-[9px]">
-                          {/* Column headers */}
-                          <div className="flex mb-1 ml-16">
-                            <div className="flex-1 text-center font-bold text-[#86868b] uppercase tracking-wider">Pred: NORMAL</div>
-                            <div className="flex-1 text-center font-bold text-[#86868b] uppercase tracking-wider">Pred: DEFECTIVE</div>
-                          </div>
-                          {/* Row 1: Actual NORMAL */}
-                          <div className="flex gap-1 mb-1">
-                            <div className="w-16 flex items-center justify-end pr-2 font-bold text-[#86868b] uppercase tracking-wider text-right leading-tight">Actual<br/>NORMAL</div>
-                            {/* TN */}
-                            <div className={`flex-1 rounded-lg border-2 p-2.5 text-center transition-all ${isNormal ? `bg-[#34c759]/20 border-[#34c759] ${activeCellStyle}` : "bg-[#f5f5f7] border-[#e5e5ea]"}`}>
-                              <div className={`font-bold mb-0.5 ${isNormal ? "text-[#34c759]" : "text-[#86868b]"}`}>TN ✓</div>
-                              <div className="text-lg font-black text-[#1d1d1f] font-mono">6,563</div>
-                              {isNormal && <div className="text-[#34c759] font-bold mt-0.5">← This result</div>}
-                            </div>
-                            {/* FP */}
-                            <div className={`flex-1 rounded-lg border-2 p-2.5 text-center transition-all bg-[#f5f5f7] border-[#e5e5ea]`}>
-                              <div className="font-bold text-[#ff9500] mb-0.5">FP ✗</div>
-                              <div className="text-lg font-black text-[#1d1d1f] font-mono">8</div>
-                            </div>
-                          </div>
-                          {/* Row 2: Actual DEFECTIVE */}
-                          <div className="flex gap-1">
-                            <div className="w-16 flex items-center justify-end pr-2 font-bold text-[#86868b] uppercase tracking-wider text-right leading-tight">Actual<br/>DEFECT</div>
-                            {/* FN */}
-                            <div className={`flex-1 rounded-lg border-2 p-2.5 text-center transition-all bg-[#f5f5f7] border-[#e5e5ea]`}>
-                              <div className="font-bold text-[#ff3b30] mb-0.5">FN ✗</div>
-                              <div className="text-lg font-black text-[#1d1d1f] font-mono">30</div>
-                            </div>
-                            {/* TP */}
-                            <div className={`flex-1 rounded-lg border-2 p-2.5 text-center transition-all ${isDef ? `bg-[#34c759]/20 border-[#34c759] ${activeCellStyle}` : "bg-[#f5f5f7] border-[#e5e5ea]"}`}>
-                              <div className={`font-bold mb-0.5 ${isDef ? "text-[#34c759]" : "text-[#86868b]"}`}>TP ✓</div>
-                              <div className="text-lg font-black text-[#1d1d1f] font-mono">214</div>
-                              {isDef && <div className="text-[#34c759] font-bold mt-0.5">← This result</div>}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    })()}
-
-                    {/* Metric row */}
-                    <div className="grid grid-cols-2 gap-1.5 mt-3">
-                      {[
-                        { label: "Accuracy", value: "99.4%" },
-                        { label: "Precision", value: "96.4%" },
-                        { label: "Recall", value: "87.7%" },
-                        { label: "F1 Score", value: "91.8%" },
-                      ].map(m => (
-                        <div key={m.label} className="flex justify-between items-center px-3 py-1.5 rounded-lg bg-[#f5f5f7] border border-[#e5e5ea]">
-                          <span className="text-[10px] text-[#86868b] font-bold">{m.label}</span>
-                          <span className="text-[10px] font-black text-[#1d1d1f] font-mono">{m.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
                 </div>
+
               ) : isZip && zipResults.length > 0 ? (
                 // Render batch summary ticket
                 <div className="space-y-4">
