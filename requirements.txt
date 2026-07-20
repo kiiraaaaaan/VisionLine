@@ -7,11 +7,19 @@
 #
 # For GPU inference, install a CUDA-matched PyTorch build first:
 #   https://pytorch.org/get-started/locally/
+#
+# Keras runs on the PyTorch backend (KERAS_BACKEND=torch).
+# No TensorFlow installation required.
+#
+# Classifier model: industry_defect_v2(cm).keras
+#   Architecture: MobileNetV2 + Dense(128) → Dropout → Dense(64) → Dropout → Dense(1)
+#   Saved as: models/industry_defect.keras
 # ============================================================
 
 # --- ML & Computer Vision ---
 torch>=2.3,<3
 torchvision>=0.18,<1
+keras>=3.4,<4                 # PyTorch-backend Keras (KERAS_BACKEND=torch); no TF needed
 ultralytics>=8.3,<9          # YOLOv8n COCO person detector
 opencv-python-headless>=4.9,<5
 Pillow>=10,<13

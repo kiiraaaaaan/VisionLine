@@ -71,10 +71,12 @@ Annotated JPEG + JSON result
 
 **Model files required** (place in `models/`):
 
-| File | Purpose |
-|---|---|
-| `models/yolov8n.pt` | Pre-trained YOLOv8n COCO — human detection |
-| `models/industry_defect.keras` | Fine-tuned Keras binary classifier — defect classification |
+| File | Purpose | Architecture |
+|---|---|---|
+| `models/yolov8n.pt` | Pre-trained YOLOv8n COCO — human/person detection | YOLOv8n (COCO, 6.2 MB) |
+| `models/industry_defect.keras` | Fine-tuned MobileNetV2 binary classifier — defect classification | MobileNetV2 + Dense → Dropout → Dense → Dropout → Dense(1) |
+
+> **Model version:** `industry_defect_v2(cm).keras` — saved as `industry_defect.keras` in `models/`. V2 adds Dropout regularisation layers to the custom classification head (Dense(128) → Dropout → Dense(64) → Dropout → Dense(1, sigmoid)) for improved generalisation over V1.
 
 ---
 
@@ -85,7 +87,7 @@ Annotated JPEG + JSON result
 |---|---|
 | Web framework | **FastAPI** 0.110+ |
 | ASGI server | **Uvicorn** (with `standard` extras) |
-| ML runtime | **PyTorch** 2.3+ / **Keras** (TF backend) |
+| ML runtime | **PyTorch** 2.3+ / **Keras 3.x** (PyTorch backend) |
 | Object detection | **Ultralytics YOLOv8n** (COCO person detector) |
 | Image processing | **OpenCV**, **Pillow**, **NumPy** |
 | ORM | **SQLAlchemy** 2.0 (async) |
