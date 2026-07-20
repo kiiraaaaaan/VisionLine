@@ -9,7 +9,7 @@ router = APIRouter()
 # ─────────────────────────────────────────────────────────────────────────────
 MODEL_METRICS = {
     "model_name": "MobileNetV2",
-    "model_file": "industry_defect.keras",
+    "model_file": "industry_defect_v2(cm).keras",
     "task": "Binary Defect Classification",
     "test_set_size": 6815,
     "normal_test_samples": 6571,
