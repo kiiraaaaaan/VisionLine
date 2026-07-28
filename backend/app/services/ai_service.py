@@ -28,6 +28,8 @@ class SegmentedObject:
     yolo_confidence: float
     box: tuple[int, int, int, int]
     polygon: Optional[np.ndarray]
+    filename: Optional[str] = None
+
 
 def _sync_cuda(device: torch.device) -> None:
     if device.type == "cuda":
@@ -253,8 +255,10 @@ class AIService:
             class_id=0,
             yolo_confidence=1.0,
             box=(0, 0, width, height),
-            polygon=None
+            polygon=None,
+            filename=filename
         )
+
         
         probabilities, mobile_ms = self.classify([dummy_obj])
         prob = float(probabilities[0])
