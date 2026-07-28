@@ -22,7 +22,7 @@ import {
   ExternalLink,
   RotateCcw
 } from "lucide-react";
-import { API_BASE } from "../config";
+import { API_BASE } from "../../config";
 
 interface ActiveStream {
   deviceId: string;
@@ -33,6 +33,7 @@ interface ActiveStream {
   status: "NORMAL" | "DEFECTIVE" | "HUMAN" | "ERROR" | "IDLE";
   confidence: number;
   isAnalyzing: boolean;
+  message?: string;
 }
 
 interface DefectLog {
@@ -41,6 +42,7 @@ interface DefectLog {
   cameraLabel: string;
   confidence: number;
   totalTimeMs: number;
+  message?: string;
 }
 
 export default function LiveInspectionPage() {
@@ -174,7 +176,8 @@ export default function LiveInspectionPage() {
                   timestamp: new Date(),
                   cameraLabel: cam.label,
                   confidence: data.confidence,
-                  totalTimeMs: data.total_time_ms
+                  totalTimeMs: data.total_time_ms,
+                  message: data.message
                 },
                 ...prev.slice(0, 9)
               ]);
@@ -187,6 +190,7 @@ export default function LiveInspectionPage() {
           updateStreamState(cam.deviceId, {
             status: data.status,
             confidence: data.confidence,
+            message: data.message,
             imageKey: Date.now(), // update key to trigger refresh of IP preview card
             isAnalyzing: false
           });
@@ -264,7 +268,8 @@ export default function LiveInspectionPage() {
                     timestamp: new Date(),
                     cameraLabel: cam.label,
                     confidence: data.confidence,
-                    totalTimeMs: data.total_time_ms
+                    totalTimeMs: data.total_time_ms,
+                    message: data.message
                   },
                   ...prev.slice(0, 9)
                 ]);
@@ -277,6 +282,7 @@ export default function LiveInspectionPage() {
             updateStreamState(cam.deviceId, {
               status: data.status,
               confidence: data.confidence,
+              message: data.message,
               isAnalyzing: false
             });
           } else {
@@ -557,7 +563,7 @@ export default function LiveInspectionPage() {
             </div>
             <div className="flex justify-between">
               <span>Classifier Target:</span>
-              <span className="font-bold text-[#0071e3] font-mono">industry_defect.keras</span>
+              <span className="font-bold text-[#0071e3] font-mono">VisionLine Custom AI Core</span>
             </div>
           </div>
         </div>
@@ -628,6 +634,13 @@ export default function LiveInspectionPage() {
                         />
                       )}
 
+                      {/* AI Vision Reasoning overlay */}
+                      {stream.message && (
+                        <div className="absolute bottom-3 left-3 bg-black/75 backdrop-blur-md border border-white/10 p-2.5 rounded-xl text-[10px] text-white z-20 font-medium leading-normal max-w-[280px] line-clamp-2" title={stream.message}>
+                          {stream.message}
+                        </div>
+                      )}
+
                       {/* HUD colored status overlay label */}
                       {hasResult && (
                         <div className={`absolute bottom-3 right-3 px-3.5 py-1.5 rounded-xl border backdrop-blur-md text-[11px] font-black uppercase tracking-wider z-20 ${
@@ -673,6 +686,7 @@ export default function LiveInspectionPage() {
                     <th className="py-3 px-5">Inspection ID</th>
                     <th className="py-3 px-5">Trigger Feed</th>
                     <th className="py-3 px-5">Status</th>
+                    <th className="py-3 px-5">Reasoning / Finding</th>
                     <th className="py-3 px-5">Defect Confidence</th>
                     <th className="py-3 px-5">Latency</th>
                     <th className="py-3 px-5 text-right font-bold pr-6">Vault Actions</th>
@@ -688,6 +702,9 @@ export default function LiveInspectionPage() {
                         <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold bg-[#ff3b30]/10 text-[#ff3b30] border border-[#ff3b30]/25">
                           <span className="w-1.5 h-1.5 rounded-full bg-[#ff3b30]" /> FAIL
                         </span>
+                      </td>
+                      <td className="py-3.5 px-5 max-w-[200px] truncate text-[#86868b] text-[11px]" title={log.message || ""}>
+                        {log.message || "—"}
                       </td>
                       <td className="py-3.5 px-5 font-mono text-[#ff3b30]">{Math.round(log.confidence * 100)}%</td>
                       <td className="py-3.5 px-5 font-mono text-[#86868b]">{log.totalTimeMs.toFixed(1)} ms</td>

@@ -27,7 +27,7 @@ import {
   Layers,
   ArrowLeft
 } from "lucide-react";
-import { API_BASE, BACKEND_URL } from "../config";
+import { API_BASE, BACKEND_URL } from "../../config";
 
 interface DetectionItem {
   class_name: string;
@@ -537,6 +537,13 @@ export default function UploadSandbox() {
                     <div className="flex justify-between items-center"><span className="text-[#86868b]">Total analysis cycle</span><span className="font-medium text-[#1d1d1f]">{singleResult.total_time_ms.toFixed(1)} ms</span></div>
                     <div className="flex justify-between items-center"><span className="text-[#86868b]">Inspector</span><span className="font-bold text-[#1d1d1f] flex items-center gap-1"><User className="w-3.5 h-3.5 text-[#86868b]" />Quality Engineer</span></div>
                   </div>
+
+                  {singleResult.message && (
+                    <div className="p-4 rounded-xl border border-[#ff9500]/25 bg-[#ff9500]/5 space-y-2">
+                      <div className="flex items-center gap-2 text-xs font-bold text-[#ff9500]"><Info className="w-4 h-4 text-[#ff9500]" /><span>AI Defect Analysis Findings</span></div>
+                      <p className="text-xs text-[#1d1d1f] leading-relaxed font-medium">{singleResult.message}</p>
+                    </div>
+                  )}
 
                   <div className="p-4 rounded-xl border bg-[#f5f5f7] space-y-2">
                     <div className="flex items-center gap-2 text-xs font-bold text-[#1d1d1f]"><Info className="w-4 h-4 text-[#0071e3]" /><span>Operational Advisory</span></div>

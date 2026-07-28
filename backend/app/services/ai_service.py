@@ -153,7 +153,7 @@ class AIService:
         yolo_iou: float = 0.70,
         threshold: Optional[float] = None
     ) -> tuple[dict, bytes]:
-        """Runs the inspection pipeline using the Keras classifier."""
+        """Runs the inspection pipeline using the Ollama vision classifier."""
         if not self.is_loaded:
             self.load_models()
 
@@ -244,7 +244,7 @@ class AIService:
             except Exception as e:
                 print(f"[AI SERVICE] Human detection error: {e}", flush=True)
 
-        # 2. Run Direct Keras Classification on the full image frame
+        # 2. Run Direct Ollama Classification on the full image frame
         width, height = image.size
         # Wrap image in a dummy SegmentedObject to maintain compatibility with classify batching
         dummy_obj = SegmentedObject(
@@ -284,8 +284,10 @@ class AIService:
         }]
 
         status = "DEFECTIVE" if is_def else "NORMAL"
-        message = "Inference run successful"
-        if is_low_confidence:
+        
+        reasoning = getattr(self.classifier, "last_reasoning", "")
+        message = reasoning if reasoning else "Inference run successful"
+        if is_low_confidence and not reasoning:
             message = "Low confidence prediction. Manual inspection is recommended."
 
         # Generate annotated image with status border overlay

@@ -14,9 +14,10 @@ import {
   User, 
   Send,
   RefreshCw,
-  FolderOpen
+  FolderOpen,
+  Info
 } from "lucide-react";
-import { API_BASE, BACKEND_URL } from "../../config";
+import { API_BASE, BACKEND_URL } from "../../../config";
 
 interface DetectionItem {
   id: string;
@@ -249,7 +250,7 @@ export default function InspectionDetailView() {
                 <Clock className="w-5 h-5" />
               </div>
               <div>
-                <p className="text-[10px] text-[#86868b] font-bold uppercase tracking-wider">Keras MobileNetV2</p>
+                <p className="text-[10px] text-[#86868b] font-bold uppercase tracking-wider">VisionLine Custom AI Core</p>
                 <p className="text-base font-bold text-[#1d1d1f] mt-0.5">{inspection.mobilenet_time_ms.toFixed(1)} ms</p>
               </div>
             </div>
@@ -264,6 +265,19 @@ export default function InspectionDetailView() {
               </div>
             </div>
           </div>
+
+          {/* AI Vision Reasoning */}
+          {inspection.message && (
+            <div className="bg-white p-6 rounded-2xl border border-[#e5e5ea] shadow-apple-card space-y-3">
+              <h3 className="text-sm font-bold text-[#1d1d1f] flex items-center gap-2">
+                <Info className="w-4 h-4 text-[#ff9500]" />
+                AI Defect Analysis Findings
+              </h3>
+              <p className="text-xs text-[#1d1d1f] leading-relaxed bg-[#f5f5f7] p-3 rounded-lg border border-[#e5e5ea] font-medium">
+                {inspection.message}
+              </p>
+            </div>
+          )}
 
           {/* Detections List */}
           <div className="bg-white p-6 rounded-2xl border border-[#e5e5ea] shadow-apple-card">

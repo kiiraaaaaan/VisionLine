@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Camera, Smartphone, Zap, CheckCircle, AlertCircle, HelpCircle } from "lucide-react";
 
-export default function MobileCamPage() {
+function MobileCamContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session") || "default-session";
   
@@ -230,5 +230,17 @@ export default function MobileCamPage() {
       `}</style>
 
     </div>
+  );
+}
+
+export default function MobileCamPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center min-h-[400px] text-center p-8 bg-[#0a0a0c] border border-[#1d1d1f] rounded-3xl">
+        <div className="text-sm font-semibold text-[#86868b] animate-pulse">Loading mobile camera system...</div>
+      </div>
+    }>
+      <MobileCamContent />
+    </Suspense>
   );
 }

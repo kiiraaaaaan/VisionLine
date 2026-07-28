@@ -12,7 +12,7 @@ import {
   RefreshCw,
   SlidersHorizontal
 } from "lucide-react";
-import { API_BASE, BACKEND_URL } from "../config";
+import { API_BASE, BACKEND_URL } from "../../config";
 
 interface InspectionItem {
   id: string;

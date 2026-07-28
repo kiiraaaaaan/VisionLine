@@ -19,7 +19,7 @@
  */
 
 import { useState, useRef, useCallback, useEffect } from "react";
-import { API_BASE } from "../config";
+import { API_BASE } from "../../config";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 

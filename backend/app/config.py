@@ -22,9 +22,19 @@ class Settings(BaseSettings):
         str(ROOT_DIR / "models" / "industry_defect.keras")
     )
     
+    # Ollama Vision Configuration
+    OLLAMA_API_URL: str = os.getenv(
+        "OLLAMA_API_URL",
+        "http://localhost:11434/api/generate"
+    )
+    OLLAMA_MODEL_NAME: str = os.getenv(
+        "OLLAMA_MODEL_NAME",
+        "llama3.2-vision"
+    )
+    
     # Confidence metrics configuration
     LOW_CONFIDENCE_THRESHOLD: float = float(os.getenv("LOW_CONFIDENCE_THRESHOLD", "0.70"))
-    CLASSIFIER_BACKEND: str = os.getenv("CLASSIFIER_BACKEND", "keras")
+    CLASSIFIER_BACKEND: str = os.getenv("CLASSIFIER_BACKEND", "ollama")
     
     # CORS Origins (frontend default development port is 3000)
     BACKEND_CORS_ORIGINS: list[str] = [

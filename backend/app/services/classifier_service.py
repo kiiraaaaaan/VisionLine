@@ -1,6 +1,12 @@
 from __future__ import annotations
 
 import os
+import io
+import json
+import base64
+import urllib.request
+import urllib.error
+import concurrent.futures
 from abc import ABC, abstractmethod
 from pathlib import Path
 import numpy as np
@@ -33,50 +39,85 @@ class BaseClassifier(ABC):
         pass
 
 
-def preprocess_keras(image: Image.Image, size: int = 224) -> np.ndarray:
-    """Helper to square-pad, resize and normalize crop image for Keras MobileNetV2."""
-    width, height = image.size
-    side = max(width, height)
-    left = (side - width) // 2
-    top = (side - height) // 2
-    padded = ImageOps.expand(image, border=(left, top, side - width - left, side - height - top), fill=0)
-    resized = padded.resize((size, size), Image.Resampling.BILINEAR)
-    arr = np.array(resized, dtype=np.float32) / 127.5 - 1.0
-    return arr
-
-
-class KerasMobileNetClassifier(BaseClassifier):
+class OllamaVisionClassifier(BaseClassifier):
     def __init__(self):
-        self.device = None
-        self.model = None
+        self.api_url = settings.OLLAMA_API_URL
+        self.model_name = settings.OLLAMA_MODEL_NAME
         self.image_size = 224
         self._threshold = 0.5
         self._class_to_idx = {"Industrial Equipment": 0}
+        self.last_reasoning = ""
 
     def load(self, device: torch.device) -> None:
-        # Import Keras dynamically within load to avoid global environment side-effects
-        os.environ["KERAS_BACKEND"] = "torch"
-        import keras
-        
-        keras_path = Path(settings.KERAS_MODEL_PATH)
-        if not keras_path.is_file():
-            raise FileNotFoundError(f"Keras model file not found at {keras_path}")
+        """Verify local Ollama connection."""
+        print(f"[Ollama Classifier] Verifying connection to {self.api_url} with model {self.model_name}...")
+        try:
+            req = urllib.request.Request(
+                "http://localhost:11434/api/tags",
+                method="GET"
+            )
+            with urllib.request.urlopen(req, timeout=3) as response:
+                if response.status == 200:
+                    tags_data = json.loads(response.read().decode('utf-8'))
+                    models = [m.get("name") for m in tags_data.get("models", [])]
+                    print(f"[Ollama Classifier] Available local models: {models}")
+        except Exception as e:
+            print(f"[Ollama Classifier] WARNING: Could not connect to local Ollama server during startup. "
+                  f"Please make sure Ollama is running and `{self.model_name}` is pulled. Error: {e}")
+
+    def _classify_single(self, item) -> float:
+        """Call the local Ollama vision API for a single crop."""
+        try:
+            buffered = io.BytesIO()
+            item.crop.convert("RGB").save(buffered, format="JPEG", quality=85)
+            img_b64 = base64.b64encode(buffered.getvalue()).decode('utf-8')
             
-        self.device = device
-        self.model = keras.models.load_model(str(keras_path))
+            prompt = (
+                "Analyze this image of industrial equipment. Identify if it has any defects "
+                "(such as cracks, scratches, deformation, or visual anomalies). "
+                "Respond ONLY with a JSON object in this exact format: "
+                '{"is_defective": true/false, "confidence": 0.0-1.0, "reasoning": "string"}'
+            )
+            
+            payload = {
+                "model": self.model_name,
+                "prompt": prompt,
+                "images": [img_b64],
+                "stream": False,
+                "format": "json"
+            }
+            
+            data = json.dumps(payload).encode('utf-8')
+            req = urllib.request.Request(
+                self.api_url,
+                data=data,
+                headers={'Content-Type': 'application/json'},
+                method='POST'
+            )
+            
+            with urllib.request.urlopen(req, timeout=15) as response:
+                resp_data = json.loads(response.read().decode('utf-8'))
+                result_text = resp_data.get("response", "{}")
+                result = json.loads(result_text)
+                
+                is_def = result.get("is_defective", False)
+                confidence = float(result.get("confidence", 0.70))
+                reasoning = result.get("reasoning", "")
+                
+                self.last_reasoning = reasoning
+                print(f"[Ollama Defect Detection Reasoning]: {reasoning}")
+                
+                return (1.0 - confidence) if is_def else confidence
+                
+        except Exception as e:
+            print(f"[Ollama Classifier] Error during image classification: {e}")
+            return 0.5
 
     def classify_batch(self, objects: list) -> np.ndarray:
-        from backend.app.services.ai_service import _sync_cuda
-        _sync_cuda(self.device)
-        
-        inputs = np.stack([preprocess_keras(item.crop, self.image_size) for item in objects])
-        tensor_inputs = torch.from_numpy(inputs).to(self.device)
-        with torch.inference_mode():
-            probs_tensor = self.model(tensor_inputs)
-            probabilities = probs_tensor.view(-1).cpu().numpy()
-            
-        _sync_cuda(self.device)
-        return probabilities
+        """Run Ollama classification concurrently."""
+        with concurrent.futures.ThreadPoolExecutor(max_workers=2) as executor:
+            probabilities = list(executor.map(self._classify_single, objects))
+        return np.array(probabilities, dtype=np.float32)
 
     @property
     def threshold(self) -> float:
@@ -89,7 +130,7 @@ class KerasMobileNetClassifier(BaseClassifier):
 
 def get_classifier(backend: str) -> BaseClassifier:
     """Factory to retrieve classification backend."""
-    if backend == "keras":
-        return KerasMobileNetClassifier()
+    if backend == "ollama":
+        return OllamaVisionClassifier()
     else:
-        raise ValueError(f"Unsupported CLASSIFIER_BACKEND: {backend}. Only 'keras' is supported.")
+        raise ValueError(f"Unsupported CLASSIFIER_BACKEND: {backend}. Only 'ollama' is supported.")
